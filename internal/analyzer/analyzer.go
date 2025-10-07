@@ -157,27 +157,27 @@ func (a *Analyzer) PerformFullAnalysis(rootPath string, onlyFolders, noContent b
 			currentFile++
 			a.printProgressBar(currentFile, totalFiles, "📄 Processing files:")
 
-			if !noContent {
-				content, err := a.extractFileContent(path, info)
-				if err == nil && content != "" {
-					if len(content) > 5000 {
-						content = content[:5000]
-					}
+			content, err := a.extractFileContent(path, info)
+			if err == nil && content != "" {
+				if len(content) > 5000 {
+					content = content[:5000]
+				}
+				if !noContent {
 					node.Content = content
-
-					description, err := a.aiClient.AnalyzeFileContent(content, info.Name())
-					if err != nil {
-						fmt.Printf("\n⚠️  Error analyzing file %s: %v\n", path, err)
-					} else {
-						node.Description = description
-					}
-
-					time.Sleep(a.config.RequestDelay)
 				}
 
+				description, err := a.aiClient.AnalyzeFileContent(content, info.Name())
 				if err != nil {
-					fmt.Printf("\n⚠️  Skipping file %s: %v\n", path, err)
+					fmt.Printf("\n⚠️  Error analyzing file %s: %v\n", path, err)
+				} else {
+					node.Description = description
 				}
+
+				time.Sleep(a.config.RequestDelay)
+			}
+
+			if err != nil {
+				fmt.Printf("\n⚠️  Skipping file %s: %v\n", path, err)
 			}
 
 			a.printProgressBar(currentFile, totalFiles, "📄 Processing files:")
