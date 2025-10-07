@@ -92,8 +92,8 @@ jobs:
 
           # Generate git changelog
           if [ -n "$PREVIOUS_TAG" ]; then
-            echo "Generating changelog from $PREVIOUS_TAG to $VERSION"
-            GIT_CHANGELOG=$(git log --pretty=format:"- %s (%h)" $PREVIOUS_TAG..$VERSION 2>/dev/null || git log --pretty=format:"- %s (%h)" --max-count=10)
+            echo "Generating changelog from $PREVIOUS_TAG to HEAD"
+            GIT_CHANGELOG=$(git log --pretty=format:"- %s (%h)" $PREVIOUS_TAG..HEAD 2>/dev/null || git log --pretty=format:"- %s (%h)" --max-count=10)
           else
             echo "No previous tag found, showing recent commits"
             GIT_CHANGELOG=$(git log --pretty=format:"- %s (%h)" --max-count=10)
@@ -101,7 +101,7 @@ jobs:
 
           # Generate contributors list
           if [ -n "$PREVIOUS_TAG" ]; then
-            CONTRIBUTORS=$(git log --pretty=format:"%an" $PREVIOUS_TAG..$VERSION 2>/dev/null | sort | uniq | sed 's/^/- @/' | tr '\n' ' ' || echo "")
+            CONTRIBUTORS=$(git log --pretty=format:"%an" $PREVIOUS_TAG..HEAD 2>/dev/null | sort | uniq | sed 's/^/- @/' | tr '\n' ' ' || echo "")
           else
             CONTRIBUTORS=$(git log --pretty=format:"%an" --max-count=10 | sort | uniq | sed 's/^/- @/' | tr '\n' ' ')
           fi
