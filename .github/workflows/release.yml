@@ -1,163 +1,185 @@
 name: Build and Release
 
 on:
-    push:
-        tags:
-            - "v*"
-    workflow_dispatch:
-        inputs:
-            tag:
-                description: "Tag to release"
-                required: true
-                type: string
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to release"
+        required: true
+        type: string
 
 permissions:
-    contents: write
+  contents: write
+
+env:
+  VERSION: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag || github.ref_name }}
 
 jobs:
-    build:
-        runs-on: self-hosted
-        strategy:
-            matrix:
-                include:
-                    - goos: windows
-                      goarch: amd64
-                      suffix: .exe
-                    - goos: linux
-                      goarch: amd64
-                      suffix: ""
-                    - goos: darwin
-                      goarch: amd64
-                      suffix: ""
-                    - goos: darwin
-                      goarch: arm64
-                      suffix: ""
+  build:
+    runs-on: self-hosted
+    strategy:
+      matrix:
+        include:
+          - goos: windows
+            goarch: amd64
+            suffix: .exe
+          - goos: linux
+            goarch: amd64
+            suffix: ""
+          - goos: darwin
+            goarch: amd64
+            suffix: ""
+          - goos: darwin
+            goarch: arm64
+            suffix: ""
 
-        steps:
-            - uses: actions/checkout@v4
+    steps:
+      - uses: actions/checkout@v4
 
-            - name: Set up Go
-              uses: actions/setup-go@v4
-              with:
-                  go-version: "1.25"
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.25"
 
-            - name: Get dependencies
-              run: go mod download
+      - name: Get dependencies
+        run: go mod download
 
-            - name: Build binary
-              env:
-                  GOOS: ${{ matrix.goos }}
-                  GOARCH: ${{ matrix.goarch }}
-                  CGO_ENABLED: 0
-              run: |
-                  BINARY_NAME="archi-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.suffix }}"
-                  go build -ldflags="-s -w" -o "$BINARY_NAME" .
-                  echo "BINARY_NAME=$BINARY_NAME" >> $GITHUB_ENV
+      - name: Build binary
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: 0
+        run: |
+          BINARY_NAME="archi-${{ env.VERSION }}-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.suffix }}"
+          go build -ldflags="-s -w" -o "$BINARY_NAME" .
+          echo "BINARY_NAME=$BINARY_NAME" >> $GITHUB_ENV
 
-            - name: Upload artifacts
-              uses: actions/upload-artifact@v4
-              with:
-                  name: archi-${{ matrix.goos }}-${{ matrix.goarch }}
-                  path: ${{ env.BINARY_NAME }}
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: archi-${{ env.VERSION }}-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: ${{ env.BINARY_NAME }}
 
-    release:
-        needs: build
-        runs-on: self-hosted
-        if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+  release:
+    needs: build
+    runs-on: self-hosted
+    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
 
-        steps:
-            - uses: actions/checkout@v4
+    steps:
+      - uses: actions/checkout@v4
 
-            - name: Download all artifacts
-              uses: actions/download-artifact@v4
-              with:
-                  path: ./artifacts
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./artifacts
 
-            - name: Prepare release files
-              run: |
-                  mkdir -p release
-                  find artifacts -name "archi-*" -type f -exec cp {} release/ \;
-                  ls -la release/
+      - name: Prepare release files
+        run: |
+          mkdir -p release
+          find artifacts -name "archi-*" -type f -exec cp {} release/ \;
+          ls -la release/
 
-            - name: Generate changelog
-              id: changelog
-              run: |
-                  CHANGELOG=$(cat << 'EOF'
-                  ## What's Changed
+      - name: Generate changelog
+        id: changelog
+        run: |
+          VERSION="${{ env.VERSION }}"
 
-                  This release includes cross-platform binaries for Windows, Linux, and macOS.
+          # Get the previous tag for changelog generation
+          PREVIOUS_TAG=$(git tag --sort=-version:refname | grep -v "^$VERSION$" | head -n 1)
 
-                  ### Download Instructions
+          # Generate git changelog
+          if [ -n "$PREVIOUS_TAG" ]; then
+            echo "Generating changelog from $PREVIOUS_TAG to $VERSION"
+            GIT_CHANGELOG=$(git log --pretty=format:"- %s (%h)" $PREVIOUS_TAG..$VERSION 2>/dev/null || git log --pretty=format:"- %s (%h)" --max-count=10)
+          else
+            echo "No previous tag found, showing recent commits"
+            GIT_CHANGELOG=$(git log --pretty=format:"- %s (%h)" --max-count=10)
+          fi
 
-                  **Windows Users:**
-                  - Download `archi-windows-amd64.exe`
-                  - Place in a directory and optionally add to PATH
-                  - Run: `archi-windows-amd64.exe --help`
+          # Generate contributors list
+          if [ -n "$PREVIOUS_TAG" ]; then
+            CONTRIBUTORS=$(git log --pretty=format:"%an" $PREVIOUS_TAG..$VERSION 2>/dev/null | sort | uniq | sed 's/^/- @/' | tr '\n' ' ' || echo "")
+          else
+            CONTRIBUTORS=$(git log --pretty=format:"%an" --max-count=10 | sort | uniq | sed 's/^/- @/' | tr '\n' ' ')
+          fi
 
-                  **Linux Users:**
-                  - Download `archi-linux-amd64`
-                  - Make executable: `chmod +x archi-linux-amd64`
-                  - Run: `./archi-linux-amd64 --help`
+          CHANGELOG=$(cat << EOF
+          ## What's Changed
 
-                  **macOS Users:**
-                  - Intel Macs: Download `archi-darwin-amd64`
-                  - Apple Silicon: Download `archi-darwin-arm64`
-                  - Make executable: `chmod +x archi-darwin-*`
-                  - Run: `./archi-darwin-* --help`
+          $GIT_CHANGELOG
 
-                  ### Features
-                  - AI-powered directory structure analysis
-                  - Multiple output formats (JSON, Markdown, detailed reports)
-                  - Support for various file types (DOCX, XLSX, PDF, images)
-                  - Architectural recommendations
-                  - Modern CLI with subcommands
+          ## Contributors
 
-                  See the [README.md](https://github.com/${{ github.repository }}/blob/main/README.md) for detailed usage instructions.
-                  EOF
-                  )
-                  echo "CHANGELOG<<EOF" >> $GITHUB_OUTPUT
-                  echo "$CHANGELOG" >> $GITHUB_OUTPUT
-                  echo "EOF" >> $GITHUB_OUTPUT
+          $CONTRIBUTORS
 
-            - name: Determine tag
-              id: tag
-              run: |
-                  if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-                    echo "tag=${{ github.event.inputs.tag }}" >> $GITHUB_OUTPUT
-                  else
-                    echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
-                  fi
+          ## Download Instructions
 
-            - name: Create Release
-              uses: softprops/action-gh-release@v1
-              with:
-                  tag_name: ${{ steps.tag.outputs.tag }}
-                  name: "Archi ${{ steps.tag.outputs.tag }}"
-                  body: ${{ steps.changelog.outputs.CHANGELOG }}
-                  files: release/*
-                  draft: false
-                  prerelease: false
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          This release includes cross-platform binaries for Windows, Linux, and macOS.
 
-    test:
-        runs-on: self-hosted
-        steps:
-            - uses: actions/checkout@v4
+          **Windows Users:**
+          - Download \`archi-${VERSION}-windows-amd64.exe\`
+          - Place in a directory and optionally add to PATH
+          - Run: \`archi-${VERSION}-windows-amd64.exe --help\`
 
-            - name: Set up Go
-              uses: actions/setup-go@v4
-              with:
-                  go-version: "1.25"
+          **Linux Users:**
+          - Download \`archi-${VERSION}-linux-amd64\`
+          - Make executable: \`chmod +x archi-${VERSION}-linux-amd64\`
+          - Run: \`./archi-${VERSION}-linux-amd64 --help\`
 
-            - name: Get dependencies
-              run: go mod download
+          **macOS Users:**
+          - Intel Macs: Download \`archi-${VERSION}-darwin-amd64\`
+          - Apple Silicon: Download \`archi-${VERSION}-darwin-arm64\`
+          - Make executable: \`chmod +x archi-${VERSION}-darwin-*\`
+          - Run: \`./archi-${VERSION}-darwin-* --help\`
 
-            - name: Run tests
-              run: go test ./...
+          ## Features
+          - AI-powered directory structure analysis
+          - Multiple output formats (JSON, Markdown, detailed reports)
+          - Support for various file types (DOCX, XLSX, PDF, images)
+          - Architectural recommendations
+          - Modern CLI with subcommands
 
-            - name: Build test
-              run: go build .
+          See the [README.md](https://github.com/${{ github.repository }}/blob/main/README.md) for detailed usage instructions.
+          EOF
+          )
 
-            - name: Test help command
-              run: ./archi --help
+          echo "CHANGELOG<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ env.VERSION }}
+          name: "Archi ${{ env.VERSION }}"
+          body: ${{ steps.changelog.outputs.CHANGELOG }}
+          files: release/*
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  test:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.25"
+
+      - name: Get dependencies
+        run: go mod download
+
+      - name: Run tests
+        run: go test ./...
+
+      - name: Build test
+        run: go build .
+
+      - name: Test help command
+        run: ./archi --help
