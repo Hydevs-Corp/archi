@@ -174,6 +174,10 @@ func (a *Analyzer) PerformFullAnalysis(rootPath string, onlyFolders, noContent b
 
 					time.Sleep(a.config.RequestDelay)
 				}
+
+				if err != nil {
+					fmt.Printf("\n⚠️  Skipping file %s: %v\n", path, err)
+				}
 			}
 
 			a.printProgressBar(currentFile, totalFiles, "📄 Processing files:")
@@ -211,11 +215,14 @@ func (a *Analyzer) PerformFullAnalysis(rootPath string, onlyFolders, noContent b
 }
 
 func (a *Analyzer) extractFileContent(path string, info os.FileInfo) (string, error) {
-	if info.Size() > a.config.MaxFileSize {
+	ext := strings.ToLower(filepath.Ext(info.Name()))
+
+	// For image files, skip the size check since we handle compression in AnalyzeImage
+	isImageFile := ext == ".png" || ext == ".jpg" || ext == ".jpeg" || ext == ".gif" || ext == ".bmp" || ext == ".webp"
+
+	if !isImageFile && info.Size() > a.config.MaxFileSize {
 		return "", fmt.Errorf("file too large")
 	}
-
-	ext := strings.ToLower(filepath.Ext(info.Name()))
 
 	switch ext {
 	case ".txt", ".md", ".go", ".js", ".py", ".java", ".c", ".cpp", ".h", ".hpp", ".css", ".html", ".xml", ".json", ".yaml", ".yml", ".toml", ".ini", ".cfg", ".conf":
