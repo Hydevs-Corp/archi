@@ -18,9 +18,6 @@ archi.exe
 *.out
 *.prof
 
-# Go mod cache
-go.sum
-
 # Dependency directories (remove the comment below to include it)
 # vendor/
 
