@@ -1,0 +1,22 @@
+# Archi Configuration File
+# This file contains configuration for the archi directory analysis tool
+
+# API Configuration
+apiBaseURL: "http://localhost:3005"
+
+# Output Configuration
+defaultOutputDir: "."
+jsonOutputFile: "output.json"
+markdownOutputFile: "output.md"
+reportOutputFile: "report.md"
+estimationFile: "estimation.md"
+
+# AI Model Configuration
+fileAnalysisModel: "mistral-small-2501"
+folderAnalysisModel: "mistral-small-2501"
+architectureAnalysisModel: "mistral-small-2501"
+imageAnalysisModel: "magistral-small-2509"
+
+# Processing Configuration
+maxFileSize: 1048576  # 1MB in bytes
+requestDelay: "200ms" # Delay between API requests

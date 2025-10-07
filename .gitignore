@@ -1,0 +1,90 @@
+test_dir
+
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Go test binary, built with `go test -c`
+*.test
+
+# Go build output
+archi
+archi.exe
+
+# Go coverage files
+*.out
+*.prof
+
+# Go mod cache
+go.sum
+
+# Dependency directories (remove the comment below to include it)
+# vendor/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Archi tool output files
+output.json
+output.md
+report.md
+estimation.md
+
+# Configuration files (keep the example)
+config.json
+
+# Log files
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+
+# Test coverage
+coverage.html
+coverage.out
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Backup files
+*.bak
+*.backup
+
+# Archive files
+*.zip
+*.tar
+*.tar.gz
+*.rar
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Compiled binary addons
+build/
+dist/
+
+# Debugging artifacts
+debug
+debug.test

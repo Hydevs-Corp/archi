@@ -1,0 +1,29 @@
+{
+  "_comment": "Configuration file for the archi tool - copy to config.json and modify as needed",
+  "apiBaseURL": "http://localhost:3005",
+  "defaultOutputDir": ".",
+  "jsonOutputFile": "output.json",
+  "markdownOutputFile": "output.md",
+  "reportOutputFile": "report.md",
+  "estimationFile": "estimation.md",
+  "fileAnalysisModel": "mistral-small-2501",
+  "folderAnalysisModel": "mistral-small-2501",
+  "architectureAnalysisModel": "mistral-small-2501",
+  "imageAnalysisModel": "magistral-small-2509",
+  "maxFileSize": 1048576,
+  "requestDelay": "200ms",
+  "_notes": {
+    "apiBaseURL": "Base URL for the AI API service",
+    "defaultOutputDir": "Directory where output files will be written",
+    "jsonOutputFile": "Name of the JSON output file containing the tree structure",
+    "markdownOutputFile": "Name of the Markdown output file with tree visualization",
+    "reportOutputFile": "Name of the architectural analysis report file",
+    "estimationFile": "Name of the estimation report file (count-only mode)",
+    "fileAnalysisModel": "AI model to use for individual file content analysis",
+    "folderAnalysisModel": "AI model to use for folder content analysis and descriptions",
+    "architectureAnalysisModel": "AI model to use for architectural analysis and recommendations",
+    "imageAnalysisModel": "AI model to use for image analysis",
+    "maxFileSize": "Maximum file size in bytes to process (1MB = 1048576)",
+    "requestDelay": "Delay between API requests (e.g., '200ms', '1s')"
+  }
+}
