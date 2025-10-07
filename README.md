@@ -28,7 +28,7 @@ Archi is a powerful Go-based command-line tool that analyzes directory structure
 
 1. Clone the repository:
 ```bash
-git clone <repository-url>
+git clone https://github.com/Hydevs-Corp/archi
 cd archi
 ```
 
