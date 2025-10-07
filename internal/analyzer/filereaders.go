@@ -1,6 +1,7 @@
 package analyzer
 
 import (
+	"fmt"
 	"strings"
 
 	"baliance.com/gooxml/document"
@@ -44,7 +45,14 @@ func ReadXlsx(path string) (string, error) {
 	return textBuilder.String(), nil
 }
 
-func ReadPdf(path string) (string, error) {
+func ReadPdf(path string) (content string, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("malformed PDF file: %v", r)
+			content = ""
+		}
+	}()
+
 	f, err := pdf.Open(path)
 	if err != nil {
 		return "", err
@@ -56,9 +64,9 @@ func ReadPdf(path string) (string, error) {
 		if page.V.IsNull() {
 			continue
 		}
-		content := page.Content()
+		pageContent := page.Content()
 		var lastX, lastY float64
-		for i, text := range content.Text {
+		for i, text := range pageContent.Text {
 			if i == 0 || text.X != lastX || text.Y != lastY {
 				textBuilder.WriteString(" ")
 			}
