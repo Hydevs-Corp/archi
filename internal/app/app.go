@@ -185,7 +185,7 @@ func (a *App) PerformArchitectureAnalysis() error {
 	fmt.Printf("📊 Total content size: %d characters\n", len(combinedContent))
 
 	var analyses []string
-	const maxChunkSize = 100000
+	const maxChunkSize = 50000
 
 	aiClient := analyzer.NewAIClient(a.config)
 
