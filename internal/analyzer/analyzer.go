@@ -217,7 +217,6 @@ func (a *Analyzer) PerformFullAnalysis(rootPath string, onlyFolders, noContent b
 func (a *Analyzer) extractFileContent(path string, info os.FileInfo) (string, error) {
 	ext := strings.ToLower(filepath.Ext(info.Name()))
 
-	// For image files, skip the size check since we handle compression in AnalyzeImage
 	isImageFile := ext == ".png" || ext == ".jpg" || ext == ".jpeg" || ext == ".gif" || ext == ".bmp" || ext == ".webp"
 
 	if !isImageFile && info.Size() > a.config.MaxFileSize {

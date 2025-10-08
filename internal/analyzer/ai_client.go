@@ -26,35 +26,29 @@ func NewAIClient(cfg *config.Config) *AIClient {
 	return &AIClient{config: cfg}
 }
 
-// compressImage compresses an image to stay under the 5MB limit
 func (c *AIClient) compressImage(imagePath string) ([]byte, error) {
 	const maxSizeBytes = 5 * 1024 * 1024 // 5MB limit
 
-	// Read the original image file
 	file, err := os.Open(imagePath)
 	if err != nil {
 		return nil, fmt.Errorf("error opening image file: %v", err)
 	}
 	defer file.Close()
 
-	// Decode the image
 	img, format, err := image.Decode(file)
 	if err != nil {
 		return nil, fmt.Errorf("error decoding image: %v", err)
 	}
 
-	// Get original dimensions
 	bounds := img.Bounds()
 	originalWidth := bounds.Max.X - bounds.Min.X
 	originalHeight := bounds.Max.Y - bounds.Min.Y
 
-	// Start with original size and compress if needed
 	currentWidth := uint(originalWidth)
 	currentHeight := uint(originalHeight)
-	quality := 85 // Start with good quality
+	quality := 85
 
 	for {
-		// Resize image if dimensions changed
 		var resizedImg image.Image
 		if currentWidth == uint(originalWidth) && currentHeight == uint(originalHeight) {
 			resizedImg = img
@@ -62,7 +56,6 @@ func (c *AIClient) compressImage(imagePath string) ([]byte, error) {
 			resizedImg = resize.Resize(currentWidth, currentHeight, img, resize.Lanczos3)
 		}
 
-		// Encode the image to bytes
 		var buf bytes.Buffer
 		var encodeErr error
 
@@ -72,7 +65,6 @@ func (c *AIClient) compressImage(imagePath string) ([]byte, error) {
 		case "png":
 			encodeErr = png.Encode(&buf, resizedImg)
 		default:
-			// Default to JPEG for other formats
 			encodeErr = jpeg.Encode(&buf, resizedImg, &jpeg.Options{Quality: quality})
 		}
 
@@ -80,22 +72,18 @@ func (c *AIClient) compressImage(imagePath string) ([]byte, error) {
 			return nil, fmt.Errorf("error encoding image: %v", encodeErr)
 		}
 
-		// Check if size is acceptable
 		if buf.Len() <= maxSizeBytes {
 			return buf.Bytes(), nil
 		}
 
-		// If still too large, reduce dimensions or quality
 		if quality > 50 {
 			quality -= 10
 		} else {
-			// Reduce dimensions by 10%
 			currentWidth = uint(float64(currentWidth) * 0.9)
 			currentHeight = uint(float64(currentHeight) * 0.9)
-			quality = 85 // Reset quality when reducing dimensions
+			quality = 85
 		}
 
-		// Prevent infinite loop - minimum reasonable size
 		if currentWidth < 100 || currentHeight < 100 {
 			return buf.Bytes(), nil
 		}
@@ -138,7 +126,6 @@ func (c *AIClient) AnalyzeFileContent(content, filename string) (string, error) 
 }
 
 func (c *AIClient) AnalyzeImage(imagePath string) (string, error) {
-	// Compress the image to stay under 5MB limit
 	imageData, err := c.compressImage(imagePath)
 	if err != nil {
 		return "", fmt.Errorf("error compressing image: %v", err)
