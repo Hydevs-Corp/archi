@@ -5,7 +5,7 @@ Archi is a powerful Go-based command-line tool that analyzes directory structure
 ## Features
 
 - 🔍 **Smart Directory Analysis**: Recursively scans directories and analyzes file contents
-- 🤖 **AI-Powered Insights**: Uses Claude AI models to understand and describe files and folders
+- 🤖 **AI-Powered Insights**: Uses Mistral AI models to understand and describe files and folders
 - 📊 **Multiple Output Formats**: Generates JSON, Markdown, and detailed reports
 - 🖼️ **Image Analysis**: Supports analysis of images using vision AI
 - 📄 **Document Support**: Reads and analyzes DOCX, XLSX, PDF, and text files
@@ -13,6 +13,15 @@ Archi is a powerful Go-based command-line tool that analyzes directory structure
 - 🏗️ **Architecture Analysis**: Provides detailed architectural recommendations
 - ⚙️ **Modern CLI**: Built with Cobra for intuitive command structure
 - 🔧 **Flexible Config**: YAML/JSON configuration with environment variable support
+
+## Roadmap
+
+Here are some of the features and improvements planned for future releases:
+
+- **Architecture Generation**: Offer the possibility to create a recommended folder architecture on the filesystem.
+- **Multi-AI Provider Support**: Add a way to use other AI providers beyond the current default (e.g., OpenAI, Anthropic).
+- **Enhanced Visualization**: Generate interactive diagrams (e.g., using D3.js or Mermaid.js) of the folder structure and dependencies.
+- **Cost Estimation Improvements**: Refine cost and time estimations based on file types and token counts.
 
 ## Prerequisites
 
