@@ -323,7 +323,7 @@ The tool processes various file types:
 
 ## Project Structure
 
-After refactoring, Archi follows Go best practices:
+Archi follows Go best practices:
 
 ```
 ├── cmd/                    # CLI commands (Cobra)
