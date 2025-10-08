@@ -22,6 +22,12 @@ Here are some of the features and improvements planned for future releases:
 - **Multi-AI Provider Support**: Add a way to use other AI providers beyond the current default (e.g., OpenAI, Anthropic).
 - **Enhanced Visualization**: Generate interactive diagrams (e.g., using D3.js or Mermaid.js) of the folder structure and dependencies.
 - **Cost Estimation Improvements**: Refine cost and time estimations based on file types and token counts.
+- **Context Analysis**: Implement a way predefined context to the file, folder, and architecture analysis.
+- **Metadata Injection**: Inject file metadata into the context analysis.
+- **Parallel AI Requests**: Implement parallel processing for AI requests to improve performance.
+- **Advanced File Outlines**: Introduce specific file outlining for security vulnerabilities, and redundant code warnings.
+- **Flat Analysis Mode**: Add a "flat analysis" mode to get a file architecture overview without deep content analysis, while retaining duplicate file warnings.
+- **Expanded Media Support**: Add support for more media file types, including audio and video formats.
 
 ## Prerequisites
 
