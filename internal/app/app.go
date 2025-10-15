@@ -49,7 +49,7 @@ func (a *App) PerformCountAnalysis(targetDir string) error {
 	return nil
 }
 
-func (a *App) PerformFullAnalysis(targetDir string, onlyFolders, noContent bool) error {
+func (a *App) PerformFullAnalysis(targetDir string) error {
 	fmt.Println("🔍 Analyzing directory structure...")
 
 	var totalFiles, totalDirs int
@@ -105,7 +105,7 @@ func (a *App) PerformFullAnalysis(targetDir string, onlyFolders, noContent bool)
 	fmt.Printf("   Note: This will make API calls to analyze each file's content\n")
 	fmt.Printf("   API endpoint: %s\n", a.config.APIBaseURL)
 
-	rootNode, err := a.analyzer.PerformFullAnalysis(targetDir, onlyFolders, noContent)
+	rootNode, err := a.analyzer.PerformFullAnalysis(targetDir, a.config.Mode)
 	if err != nil {
 		return fmt.Errorf("error performing full analysis: %w", err)
 	}

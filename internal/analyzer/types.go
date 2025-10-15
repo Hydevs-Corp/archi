@@ -42,7 +42,8 @@ type ChatMessage struct {
 
 type ChatRequest struct {
 	History []ChatMessage `json:"history"`
-	Model   string        `json:"model"`
+	// Model can be either a string (for Mistral-only shortcut) or an array of provider/model objects
+	Model   interface{}   `json:"model"`
 }
 
 type ChatResponse struct {
@@ -52,7 +53,8 @@ type ChatResponse struct {
 
 type ImageRequest struct {
 	Image string `json:"image"`
-	Model string `json:"model"`
+	// Model can be either a string (for Mistral-only shortcut) or an array of provider/model objects
+	Model interface{} `json:"model"`
 }
 
 type ImageResponse struct {

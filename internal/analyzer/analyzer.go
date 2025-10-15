@@ -121,7 +121,10 @@ func (a *Analyzer) calculateFolderStats(folderPath, folderName string) (*FolderS
 	return stats, nil
 }
 
-func (a *Analyzer) PerformFullAnalysis(rootPath string, onlyFolders, noContent bool) (*Node, error) {
+func (a *Analyzer) PerformFullAnalysis(rootPath string, mode string) (*Node, error) {
+	m := strings.ToLower(strings.TrimSpace(mode))
+	onlyFolders := m == "folder-only"
+	noContent := m == "description-only"
 	// Normalize the root path to avoid trailing-slash mismatches when linking parent/child nodes
 	rootPath = filepath.Clean(rootPath)
 	nodes := make(map[string]*Node)

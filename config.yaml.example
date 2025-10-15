@@ -11,11 +11,27 @@ markdownOutputFile: "output.md"
 reportOutputFile: "report.md"
 estimationFile: "estimation.md"
 
+# Analysis Mode
+# Choose how the analysis runs: "full", "description-only" (no content in JSON), or "folder-only" (folders only)
+mode: "full"
+
 # AI Model Configuration
+# Either use a single model (Mistral-only when provided as a string), or specify multiple provider/models.
+# Single-model (backward compatible):
 fileAnalysisModel: "mistral-small-2501"
 folderAnalysisModel: "mistral-small-2501"
 architectureAnalysisModel: "mistral-small-2501"
 imageAnalysisModel: "magistral-small-2509"
+
+# Multi-model (takes precedence over the single-model fields when non-empty):
+# fileAnalysisModels:
+#   - provider: "gemini"
+#     model: "gemini-2.5-flash"
+#   - provider: "mistral"
+#     model: "mistral-small-2503"
+# folderAnalysisModels: []
+# architectureAnalysisModels: []
+# imageAnalysisModels: []
 
 # Processing Configuration
 maxFileSize: 1048576  # 1MB in bytes

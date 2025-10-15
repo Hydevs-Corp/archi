@@ -91,6 +91,12 @@ func (c *AIClient) compressImage(imagePath string) ([]byte, error) {
 }
 
 func (c *AIClient) AnalyzeFileContent(content, filename string) (string, error) {
+	var model interface{}
+	if len(c.config.FileAnalysisModels) > 0 {
+		model = c.config.FileAnalysisModels
+	} else {
+		model = c.config.FileAnalysisModel
+	}
 	request := ChatRequest{
 		History: []ChatMessage{
 			{
@@ -98,7 +104,7 @@ func (c *AIClient) AnalyzeFileContent(content, filename string) (string, error) 
 				Content: fmt.Sprintf("Please describe the content of this file named '%s' in 250 words maximum based on the following content (first 5000 characters):\n\n%s", filename, content),
 			},
 		},
-		Model: c.config.FileAnalysisModel,
+		Model: model,
 	}
 
 	jsonData, err := json.Marshal(request)
@@ -133,10 +139,13 @@ func (c *AIClient) AnalyzeImage(imagePath string) (string, error) {
 
 	base64Image := base64.StdEncoding.EncodeToString(imageData)
 
-	request := ImageRequest{
-		Image: base64Image,
-		Model: c.config.ImageAnalysisModel,
+	var model interface{}
+	if len(c.config.ImageAnalysisModels) > 0 {
+		model = c.config.ImageAnalysisModels
+	} else {
+		model = c.config.ImageAnalysisModel
 	}
+	request := ImageRequest{Image: base64Image, Model: model}
 
 	jsonData, err := json.Marshal(request)
 	if err != nil {
@@ -200,6 +209,12 @@ func (c *AIClient) AnalyzeFolderContent(node *Node) (string, error) {
 
 	prompt := fmt.Sprintf("Please describe this folder named '%s' in 250 words maximum based on its contents below:\n\n%s", node.Name, contentBuilder)
 
+	var model interface{}
+	if len(c.config.FolderAnalysisModels) > 0 {
+		model = c.config.FolderAnalysisModels
+	} else {
+		model = c.config.FolderAnalysisModel
+	}
 	request := ChatRequest{
 		History: []ChatMessage{
 			{
@@ -207,7 +222,7 @@ func (c *AIClient) AnalyzeFolderContent(node *Node) (string, error) {
 				Content: prompt,
 			},
 		},
-		Model: c.config.FolderAnalysisModel,
+		Model: model,
 	}
 
 	jsonData, err := json.Marshal(request)
@@ -235,6 +250,12 @@ func (c *AIClient) AnalyzeFolderContent(node *Node) (string, error) {
 }
 
 func (c *AIClient) AnalyzeArchitecture(content, filename string) (string, error) {
+	var model interface{}
+	if len(c.config.ArchitectureAnalysisModels) > 0 {
+		model = c.config.ArchitectureAnalysisModels
+	} else {
+		model = c.config.ArchitectureAnalysisModel
+	}
 	request := ChatRequest{
 		History: []ChatMessage{
 			{
@@ -242,7 +263,7 @@ func (c *AIClient) AnalyzeArchitecture(content, filename string) (string, error)
 				Content: fmt.Sprintf("Please analyze the software architecture of this project based on the provided file structure and descriptions from '%s'. Provide detailed recommendations for better architecture, including:\n\n1. Current architecture analysis\n2. Identified issues and anti-patterns\n3. Suggested improvements\n4. Recommended folder structure\n5. Best practices recommendations\n6. Technology stack optimization suggestions\n\nContent to analyze:\n%s", filename, content),
 			},
 		},
-		Model: c.config.ArchitectureAnalysisModel,
+		Model: model,
 	}
 
 	jsonData, err := json.Marshal(request)
@@ -275,6 +296,12 @@ func (c *AIClient) CombineArchitecturalAnalyses(analyses []string) (string, erro
 		analysesText += analysis + "\n\n---\n\n"
 	}
 
+	var model interface{}
+	if len(c.config.ArchitectureAnalysisModels) > 0 {
+		model = c.config.ArchitectureAnalysisModels
+	} else {
+		model = c.config.ArchitectureAnalysisModel
+	}
 	request := ChatRequest{
 		History: []ChatMessage{
 			{
@@ -282,7 +309,7 @@ func (c *AIClient) CombineArchitecturalAnalyses(analyses []string) (string, erro
 				Content: fmt.Sprintf("Please combine and synthesize the following architectural analyses into a comprehensive final report. Create a cohesive architectural recommendation document that:\n\n1. Consolidates all findings into a unified analysis\n2. Removes redundancy while preserving important details\n3. Provides a clear executive summary\n4. Presents actionable recommendations in priority order\n5. Includes a proposed implementation roadmap\n\nAnalyses to combine:\n\n%s", analysesText),
 			},
 		},
-		Model: c.config.ArchitectureAnalysisModel,
+		Model: model,
 	}
 
 	jsonData, err := json.Marshal(request)

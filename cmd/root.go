@@ -13,8 +13,6 @@ import (
 
 var (
 	cfgFile     string
-	onlyFolders bool
-	noContent   bool
 	countOnly   bool
 	betterArchi bool
 )
@@ -45,11 +43,6 @@ func init() {
 	cobra.OnInitialize(initConfig)
 
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is ./config.yaml)")
-
-	rootCmd.Flags().BoolVar(&onlyFolders, "only-folders", false, "Only show folders in the output")
-	rootCmd.Flags().BoolVar(&noContent, "no-content", false, "Exclude file content from the JSON output")
-	rootCmd.Flags().BoolVar(&countOnly, "count-only", false, "Only count files and folders, estimate execution time")
-	rootCmd.Flags().BoolVar(&betterArchi, "better-archi", false, "Analyze existing outputs to generate architectural recommendations")
 }
 
 func initConfig() {
@@ -95,7 +88,7 @@ func runAnalysis(cmd *cobra.Command, args []string) error {
 	case countOnly:
 		return application.PerformCountAnalysis(targetDir)
 	default:
-		return application.PerformFullAnalysis(targetDir, onlyFolders, noContent)
+		return application.PerformFullAnalysis(targetDir)
 	}
 }
 

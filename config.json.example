@@ -6,10 +6,20 @@
   "markdownOutputFile": "output.md",
   "reportOutputFile": "report.md",
   "estimationFile": "estimation.md",
+  "mode": "full",
   "fileAnalysisModel": "mistral-small-2501",
   "folderAnalysisModel": "mistral-small-2501",
   "architectureAnalysisModel": "mistral-small-2501",
   "imageAnalysisModel": "magistral-small-2509",
+  "fileAnalysisModels": [
+    {
+      "provider": "mistral",
+      "model": "mistral-small-2503"
+    }
+  ],
+  "folderAnalysisModels": [],
+  "architectureAnalysisModels": [],
+  "imageAnalysisModels": [],
   "maxFileSize": 1048576,
   "requestDelay": "200ms",
   "batchSize": 5,
@@ -20,10 +30,15 @@
     "markdownOutputFile": "Name of the Markdown output file with tree visualization",
     "reportOutputFile": "Name of the architectural analysis report file",
     "estimationFile": "Name of the estimation report file (count-only mode)",
+    "mode": "Analysis mode: 'full', 'description-only' (no content in JSON), or 'folder-only' (folders only)",
     "fileAnalysisModel": "AI model to use for individual file content analysis",
     "folderAnalysisModel": "AI model to use for folder content analysis and descriptions",
     "architectureAnalysisModel": "AI model to use for architectural analysis and recommendations",
     "imageAnalysisModel": "AI model to use for image analysis",
+    "fileAnalysisModels": "Array of provider/model objects used for file analysis (takes precedence over fileAnalysisModel)",
+    "folderAnalysisModels": "Array of provider/model objects used for folder analysis",
+    "architectureAnalysisModels": "Array of provider/model objects used for architecture analysis",
+    "imageAnalysisModels": "Array of provider/model objects used for image analysis",
     "maxFileSize": "Maximum file size in bytes to process (1MB = 1048576)",
     "requestDelay": "Delay between API requests (e.g., '200ms', '1s')",
     "batchSize": "Number of concurrent requests per batch"
