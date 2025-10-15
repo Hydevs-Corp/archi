@@ -189,6 +189,7 @@ func (a *Analyzer) PerformFullAnalysis(rootPath string, mode string) (*Node, err
 		fmt.Printf("\n\n📦 Analyzing files in batches of %d...\n", a.config.BatchSize)
 		total := len(fileNodes)
 		currentFile = 0
+		a.printProgressBar(currentFile, total, "📄 Processing files:")
 		for i := 0; i < total; i += a.config.BatchSize {
 			end := i + a.config.BatchSize
 			if end > total {
@@ -264,6 +265,7 @@ func (a *Analyzer) PerformFullAnalysis(rootPath string, mode string) (*Node, err
 	collect(rootNode)
 
 	currentFolder := 0
+	a.printProgressBar(currentFolder, totalFolders, "📁 Processing folders:")
 	for i := 0; i < len(folderNodes); i += a.config.BatchSize {
 		end := i + a.config.BatchSize
 		if end > len(folderNodes) {
