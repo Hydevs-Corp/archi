@@ -213,12 +213,58 @@ func (a *App) PerformArchitectureAnalysis() error {
 			analyses = append(analyses, analysis)
 		}
 
-		fmt.Println("🔄 Combining chunk analyses...")
+		reduced := analyses
+		round := 1
+		for len(reduced) > 1 {
+			fmt.Printf("🔁 Reduction round %d: %d analyses to reduce...\n", round, len(reduced))
 
-		finalAnalysis, err := aiClient.CombineArchitecturalAnalyses(analyses)
-		if err != nil {
-			return fmt.Errorf("error combining analyses: %v", err)
+			groups := make([][]string, 0)
+			var currentGroup []string
+			currentLen := 0
+
+			for _, aText := range reduced {
+				aLen := len(aText)
+				if len(currentGroup) == 0 {
+					currentGroup = []string{aText}
+					currentLen = aLen + 2 // separator
+					continue
+				}
+
+				if currentLen+aLen+2 <= maxChunkSize {
+					currentGroup = append(currentGroup, aText)
+					currentLen += aLen + 2
+				} else {
+					groups = append(groups, currentGroup)
+					currentGroup = []string{aText}
+					currentLen = aLen + 2
+				}
+			}
+			if len(currentGroup) > 0 {
+				groups = append(groups, currentGroup)
+			}
+
+			fmt.Printf("🔄 Combining %d groups in this round...\n", len(groups))
+
+			nextRound := make([]string, 0, len(groups))
+			for gi, grp := range groups {
+				fmt.Printf("   ➤ Combining group %d/%d (items: %d)...\n", gi+1, len(groups), len(grp))
+				combined, err := aiClient.CombineArchitecturalAnalyses(grp)
+				if err != nil {
+					return fmt.Errorf("error combining group %d analyses: %v", gi+1, err)
+				}
+				nextRound = append(nextRound, combined)
+			}
+
+			reduced = nextRound
+			fmt.Printf("🔄 Reduction round %d complete: %d analyses remain\n", round, len(reduced))
+			round++
 		}
+
+		if len(reduced) == 0 {
+			return fmt.Errorf("no analyses produced during reduction")
+		}
+
+		finalAnalysis := reduced[0]
 
 		err = os.WriteFile(filepath.Join(a.config.DefaultOutputDir, a.config.ReportOutputFile), []byte(finalAnalysis), 0644)
 		if err != nil {
