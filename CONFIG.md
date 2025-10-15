@@ -31,8 +31,9 @@ architectureAnalysisModel: "mistral-small-2501"
 imageAnalysisModel: "magistral-small-2509"
 
 # Processing Configuration
-maxFileSize: 1048576  # 1MB in bytes
+maxFileSize: 1048576 # 1MB in bytes
 requestDelay: "200ms" # Delay between API requests
+batchSize: 5 # Number of concurrent requests per batch
 ```
 
 ### JSON Configuration (Legacy Support)
@@ -41,18 +42,19 @@ Create `config.json`:
 
 ```json
 {
-  "apiBaseURL": "http://localhost:3005",
-  "defaultOutputDir": ".",
-  "jsonOutputFile": "output.json",
-  "markdownOutputFile": "output.md",
-  "reportOutputFile": "report.md",
-  "estimationFile": "estimation.md",
-  "fileAnalysisModel": "mistral-small-2501",
-  "folderAnalysisModel": "mistral-small-2501",
-  "architectureAnalysisModel": "mistral-small-2501",
-  "imageAnalysisModel": "magistral-small-2509",
-  "maxFileSize": 1048576,
-  "requestDelay": "200ms"
+    "apiBaseURL": "http://localhost:3005",
+    "defaultOutputDir": ".",
+    "jsonOutputFile": "output.json",
+    "markdownOutputFile": "output.md",
+    "reportOutputFile": "report.md",
+    "estimationFile": "estimation.md",
+    "fileAnalysisModel": "mistral-small-2501",
+    "folderAnalysisModel": "mistral-small-2501",
+    "architectureAnalysisModel": "mistral-small-2501",
+    "imageAnalysisModel": "magistral-small-2509",
+    "maxFileSize": 1048576,
+    "requestDelay": "200ms",
+    "batchSize": 5
 }
 ```
 
@@ -76,6 +78,7 @@ export ARCHI_FOLDERANALYSISMODEL="mistral-small-2501"
 # Processing Configuration
 export ARCHI_MAXFILESIZE="2097152"  # 2MB
 export ARCHI_REQUESTDELAY="300ms"
+export ARCHI_BATCHSIZE="5"
 ```
 
 ## Configuration File Discovery
@@ -91,35 +94,36 @@ Archi searches for configuration files in the following order:
 
 ### API Configuration
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
+| Parameter    | Type   | Default                 | Description                     |
+| ------------ | ------ | ----------------------- | ------------------------------- |
 | `apiBaseURL` | string | `http://localhost:3005` | Base URL for the AI API service |
 
 ### Output Configuration
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `defaultOutputDir` | string | `.` | Directory where output files will be written |
-| `jsonOutputFile` | string | `output.json` | Name of the JSON output file |
-| `markdownOutputFile` | string | `output.md` | Name of the Markdown output file |
-| `reportOutputFile` | string | `report.md` | Name of the architectural analysis report |
-| `estimationFile` | string | `estimation.md` | Name of the estimation report file |
+| Parameter            | Type   | Default         | Description                                  |
+| -------------------- | ------ | --------------- | -------------------------------------------- |
+| `defaultOutputDir`   | string | `.`             | Directory where output files will be written |
+| `jsonOutputFile`     | string | `output.json`   | Name of the JSON output file                 |
+| `markdownOutputFile` | string | `output.md`     | Name of the Markdown output file             |
+| `reportOutputFile`   | string | `report.md`     | Name of the architectural analysis report    |
+| `estimationFile`     | string | `estimation.md` | Name of the estimation report file           |
 
 ### AI Model Configuration
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `fileAnalysisModel` | string | `mistral-small-2501` | AI model for file content analysis |
-| `folderAnalysisModel` | string | `mistral-small-2501` | AI model for folder analysis |
-| `architectureAnalysisModel` | string | `mistral-small-2501` | AI model for architectural analysis |
-| `imageAnalysisModel` | string | `magistral-small-2509` | AI model for image analysis |
+| Parameter                   | Type   | Default                | Description                         |
+| --------------------------- | ------ | ---------------------- | ----------------------------------- |
+| `fileAnalysisModel`         | string | `mistral-small-2501`   | AI model for file content analysis  |
+| `folderAnalysisModel`       | string | `mistral-small-2501`   | AI model for folder analysis        |
+| `architectureAnalysisModel` | string | `mistral-small-2501`   | AI model for architectural analysis |
+| `imageAnalysisModel`        | string | `magistral-small-2509` | AI model for image analysis         |
 
 ### Processing Configuration
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `maxFileSize` | int | `1048576` | Maximum file size to process (bytes) |
-| `requestDelay` | duration | `200ms` | Delay between API requests |
+| Parameter      | Type     | Default   | Description                             |
+| -------------- | -------- | --------- | --------------------------------------- |
+| `maxFileSize`  | int      | `1048576` | Maximum file size to process (bytes)    |
+| `requestDelay` | duration | `200ms`   | Delay between API requests              |
+| `batchSize`    | int      | `5`       | Number of concurrent requests per batch |
 
 ## Usage Examples
 
@@ -134,17 +138,19 @@ export ARCHI_REQUESTDELAY="500ms"
 ### Development vs Production
 
 **Development config** (`dev.yaml`):
+
 ```yaml
 apiBaseURL: "http://localhost:3005"
-requestDelay: "100ms"  # Faster for development
-maxFileSize: 2097152   # 2MB for larger files
+requestDelay: "100ms" # Faster for development
+maxFileSize: 2097152 # 2MB for larger files
 ```
 
 **Production config** (`prod.yaml`):
+
 ```yaml
 apiBaseURL: "https://api.example.com"
-requestDelay: "500ms"  # Slower to be respectful
-maxFileSize: 1048576   # 1MB to prevent timeouts
+requestDelay: "500ms" # Slower to be respectful
+maxFileSize: 1048576 # 1MB to prevent timeouts
 ```
 
 ### CI/CD Configuration
@@ -164,13 +170,14 @@ export ARCHI_REQUESTDELAY="1s"  # Be conservative in CI
 
 Archi validates configuration on startup and will report errors for:
 
-- Invalid URLs
-- Missing required parameters
-- Invalid duration formats
-- Negative file sizes
-- Inaccessible output directories
+-   Invalid URLs
+-   Missing required parameters
+-   Invalid duration formats
+-   Negative file sizes
+-   Inaccessible output directories
 
 Example validation output:
+
 ```
 Error loading configuration: invalid requestDelay format '200xyz': time: unknown unit "xyz" in duration "200xyz"
 ```

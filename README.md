@@ -13,6 +13,7 @@ Archi is a powerful Go-based command-line tool that analyzes directory structure
 - 🏗️ **Architecture Analysis**: Provides detailed architectural recommendations
 - ⚙️ **Modern CLI**: Built with Cobra for intuitive command structure
 - 🔧 **Flexible Config**: YAML/JSON configuration with environment variable support
+- 🧵 **Batched Requests**: Control concurrency with a configurable batch size
 
 ## Roadmap
 
@@ -132,6 +133,7 @@ imageAnalysisModel: "magistral-small-2509"
 # Processing Configuration
 maxFileSize: 1048576  # 1MB in bytes
 requestDelay: "200ms"
+batchSize: 5          # Number of concurrent requests per batch
 ```
 
 ### JSON Configuration (Legacy)
@@ -156,6 +158,7 @@ cp config.json.example config.json
 - `imageAnalysisModel`: AI model to use for image analysis
 - `maxFileSize`: Maximum file size to process (in bytes)
 - `requestDelay`: Delay between API requests to avoid overwhelming the service
+- `batchSize`: Number of concurrent requests per batch (default: 5)
 
 ### Environment Variables
 
@@ -333,6 +336,7 @@ The tool processes various file types:
 - **File processing**: ~4 seconds per file for AI analysis
 - **Folder processing**: ~7 seconds per folder for AI analysis
 - **Request delay**: Configurable delay between API calls (default: 200ms)
+- **Batch size**: Controls concurrency for file and folder analyses (default: 5)
 - **Large projects**: Use `./archi count` first to estimate time
 - **Memory usage**: Large files are truncated to 5000 characters for analysis
 

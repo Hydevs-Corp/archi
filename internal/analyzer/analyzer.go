@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"archi/internal/config"
@@ -121,6 +122,8 @@ func (a *Analyzer) calculateFolderStats(folderPath, folderName string) (*FolderS
 }
 
 func (a *Analyzer) PerformFullAnalysis(rootPath string, onlyFolders, noContent bool) (*Node, error) {
+	// Normalize the root path to avoid trailing-slash mismatches when linking parent/child nodes
+	rootPath = filepath.Clean(rootPath)
 	nodes := make(map[string]*Node)
 	var rootNode *Node
 	currentFile := 0
@@ -133,6 +136,7 @@ func (a *Analyzer) PerformFullAnalysis(rootPath string, onlyFolders, noContent b
 		return nil
 	})
 
+	var fileNodes []*Node
 	err := filepath.Walk(rootPath, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -142,8 +146,11 @@ func (a *Analyzer) PerformFullAnalysis(rootPath string, onlyFolders, noContent b
 			return nil
 		}
 
+		// Normalize the current path for consistent map keys and comparisons
+		cleanPath := filepath.Clean(path)
+
 		node := &Node{
-			Path: path,
+			Path: cleanPath,
 			Name: info.Name(),
 		}
 
@@ -154,41 +161,15 @@ func (a *Analyzer) PerformFullAnalysis(rootPath string, onlyFolders, noContent b
 		}
 
 		if node.Type == "file" {
-			currentFile++
-			a.printProgressBar(currentFile, totalFiles, "📄 Processing files:")
-
-			content, err := a.extractFileContent(path, info)
-			if err == nil && content != "" {
-				if len(content) > 5000 {
-					content = content[:5000]
-				}
-				if !noContent {
-					node.Content = content
-				}
-
-				description, err := a.aiClient.AnalyzeFileContent(content, info.Name())
-				if err != nil {
-					fmt.Printf("\n⚠️  Error analyzing file %s: %v\n", path, err)
-				} else {
-					node.Description = description
-				}
-
-				time.Sleep(a.config.RequestDelay)
-			}
-
-			if err != nil {
-				fmt.Printf("\n⚠️  Skipping file %s: %v\n", path, err)
-			}
-
-			a.printProgressBar(currentFile, totalFiles, "📄 Processing files:")
+			fileNodes = append(fileNodes, node)
 		}
 
-		nodes[path] = node
+		nodes[cleanPath] = node
 
-		if path == rootPath {
+		if cleanPath == rootPath {
 			rootNode = node
 		} else {
-			parentPath := filepath.Dir(path)
+			parentPath := filepath.Clean(filepath.Dir(cleanPath))
 			if parent, exists := nodes[parentPath]; exists {
 				parent.Children = append(parent.Children, node)
 			}
@@ -201,14 +182,109 @@ func (a *Analyzer) PerformFullAnalysis(rootPath string, onlyFolders, noContent b
 		return nil, err
 	}
 
+	if !onlyFolders {
+		fmt.Printf("\n\n📦 Analyzing files in batches of %d...\n", a.config.BatchSize)
+		total := len(fileNodes)
+		currentFile = 0
+		for i := 0; i < total; i += a.config.BatchSize {
+			end := i + a.config.BatchSize
+			if end > total {
+				end = total
+			}
+
+			batch := fileNodes[i:end]
+			var wg sync.WaitGroup
+			wg.Add(len(batch))
+
+			for _, n := range batch {
+				n := n
+				path := n.Path
+				info, err := os.Stat(path)
+				if err != nil {
+					fmt.Printf("\n⚠️  Skipping file %s: %v\n", path, err)
+					wg.Done()
+					continue
+				}
+
+				go func() {
+					defer wg.Done()
+					ext := strings.ToLower(filepath.Ext(info.Name()))
+					switch ext {
+					case ".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp":
+						desc, err := a.aiClient.AnalyzeImage(path)
+						if err != nil {
+							fmt.Printf("\n⚠️  Error analyzing image %s: %v\n", path, err)
+							return
+						}
+						n.Description = fmt.Sprintf("Image analysis: %s", desc)
+					default:
+						content, err := a.extractFileContent(path, info)
+						if err != nil || content == "" {
+							return
+						}
+						if len(content) > 5000 {
+							content = content[:5000]
+						}
+						if !noContent {
+							n.Content = content
+						}
+						desc, err := a.aiClient.AnalyzeFileContent(content, info.Name())
+						if err != nil {
+							fmt.Printf("\n⚠️  Error analyzing file %s: %v\n", path, err)
+							return
+						}
+						n.Description = desc
+					}
+				}()
+			}
+			wg.Wait()
+			currentFile += len(batch)
+			a.printProgressBar(currentFile, total, "📄 Processing files:")
+			time.Sleep(a.config.RequestDelay)
+		}
+	}
+
 	fmt.Printf("\n\n🗂️  Starting folder description generation...\n")
 	totalFolders := a.countFolders(rootNode)
 	fmt.Printf("   Found %d folders to analyze\n", totalFolders)
 
-	var currentFolder int
-	err = a.processFoldersForDescription(rootNode, &currentFolder, totalFolders)
-	if err != nil {
-		return nil, err
+	var folderNodes []*Node
+	var collect func(n *Node)
+	collect = func(n *Node) {
+		if n.Type == "directory" {
+			folderNodes = append(folderNodes, n)
+		}
+		for _, ch := range n.Children {
+			collect(ch)
+		}
+	}
+	collect(rootNode)
+
+	currentFolder := 0
+	for i := 0; i < len(folderNodes); i += a.config.BatchSize {
+		end := i + a.config.BatchSize
+		if end > len(folderNodes) {
+			end = len(folderNodes)
+		}
+		batch := folderNodes[i:end]
+		var wg sync.WaitGroup
+		wg.Add(len(batch))
+		for _, n := range batch {
+			n := n
+			go func() {
+				defer wg.Done()
+				desc, err := a.aiClient.AnalyzeFolderContent(n)
+				if err != nil {
+					fmt.Printf("\n⚠️  Error analyzing folder %s: %v\n", n.Path, err)
+					return
+				}
+				n.Description = desc
+			}()
+		}
+		wg.Wait()
+		currentFolder += len(batch)
+		a.printProgressBar(currentFolder, totalFolders, "📁 Processing folders:")
+		time.Sleep(a.config.RequestDelay)
 	}
 
 	return rootNode, nil
@@ -241,11 +317,9 @@ func (a *Analyzer) extractFileContent(path string, info os.FileInfo) (string, er
 		return ReadPdf(path)
 
 	case ".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp":
-		description, err := a.aiClient.AnalyzeImage(path)
-		if err != nil {
-			return "", err
-		}
-		return fmt.Sprintf("Image analysis: %s", description), nil
+		// We don't analyze images here to keep text-only content extraction.
+		// Image analysis is triggered via AI client when appropriate elsewhere.
+		return "", nil
 
 	default:
 		return "", fmt.Errorf("unsupported file type")
@@ -278,6 +352,9 @@ func (a *Analyzer) processFoldersForDescription(node *Node, currentFolder *int, 
 }
 
 func (a *Analyzer) countFolders(node *Node) int {
+	if node == nil {
+		return 0
+	}
 	count := 0
 	if node.Type == "directory" {
 		count = 1

@@ -22,6 +22,7 @@ type Config struct {
 	MaxFileSize               int64         `mapstructure:"maxFileSize"`
 	RequestDelayStr           string        `mapstructure:"requestDelay"`
 	RequestDelay              time.Duration `mapstructure:"-"`
+	BatchSize                 int           `mapstructure:"batchSize"`
 }
 
 func GetDefaultConfig() *Config {
@@ -39,6 +40,7 @@ func GetDefaultConfig() *Config {
 		MaxFileSize:               1024 * 1024, // 1MB
 		RequestDelayStr:           "200ms",
 		RequestDelay:              200 * time.Millisecond,
+		BatchSize:                 5,
 	}
 }
 
@@ -59,6 +61,7 @@ func LoadConfig(configPath string) (*Config, error) {
 	v.SetDefault("imageAnalysisModel", config.ImageAnalysisModel)
 	v.SetDefault("maxFileSize", config.MaxFileSize)
 	v.SetDefault("requestDelay", config.RequestDelayStr)
+	v.SetDefault("batchSize", config.BatchSize)
 
 	if configPath != "" {
 		v.SetConfigFile(configPath)
@@ -134,6 +137,9 @@ func validateConfig(config *Config) error {
 	}
 	if config.RequestDelay < 0 {
 		return fmt.Errorf("requestDelay cannot be negative")
+	}
+	if config.BatchSize <= 0 {
+		return fmt.Errorf("batchSize must be >= 1")
 	}
 
 	return nil

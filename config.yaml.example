@@ -20,3 +20,4 @@ imageAnalysisModel: "magistral-small-2509"
 # Processing Configuration
 maxFileSize: 1048576  # 1MB in bytes
 requestDelay: "200ms" # Delay between API requests
+batchSize: 5          # Number of concurrent requests per batch

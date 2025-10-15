@@ -12,6 +12,7 @@
   "imageAnalysisModel": "magistral-small-2509",
   "maxFileSize": 1048576,
   "requestDelay": "200ms",
+  "batchSize": 5,
   "_notes": {
     "apiBaseURL": "Base URL for the AI API service",
     "defaultOutputDir": "Directory where output files will be written",
@@ -24,6 +25,7 @@
     "architectureAnalysisModel": "AI model to use for architectural analysis and recommendations",
     "imageAnalysisModel": "AI model to use for image analysis",
     "maxFileSize": "Maximum file size in bytes to process (1MB = 1048576)",
-    "requestDelay": "Delay between API requests (e.g., '200ms', '1s')"
+    "requestDelay": "Delay between API requests (e.g., '200ms', '1s')",
+    "batchSize": "Number of concurrent requests per batch"
   }
 }
