@@ -26,7 +26,7 @@ func New(cfg *config.Config) *App {
 }
 
 func (a *App) PerformCountAnalysis(targetDir string) error {
-	fmt.Println("🔢 Count-only mode: Analyzing directory structure...")
+	fmt.Println("🧮 Estimate mode: Analyzing directory structure...")
 
 	estimation, err := a.analyzer.PerformCountAnalysis(targetDir)
 	if err != nil {
@@ -40,7 +40,7 @@ func (a *App) PerformCountAnalysis(targetDir string) error {
 		return fmt.Errorf("error writing estimation file: %w", err)
 	}
 
-	fmt.Printf("\n📊 Analysis Complete!\n")
+	fmt.Printf("\n📊 Estimation Complete!\n")
 	fmt.Printf("   Total files: %d\n", estimation.TotalFiles)
 	fmt.Printf("   Total folders: %d\n", estimation.TotalFolders)
 	fmt.Printf("   Estimated execution time: %s\n", a.formatDuration(estimation.TotalEstimatedTime))

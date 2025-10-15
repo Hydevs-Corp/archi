@@ -12,9 +12,7 @@ import (
 )
 
 var (
-	cfgFile     string
-	countOnly   bool
-	betterArchi bool
+	cfgFile string
 )
 
 var rootCmd = &cobra.Command{
@@ -82,14 +80,8 @@ func runAnalysis(cmd *cobra.Command, args []string) error {
 
 	application := app.New(cfg)
 
-	switch {
-	case betterArchi:
-		return application.PerformArchitectureAnalysis()
-	case countOnly:
-		return application.PerformCountAnalysis(targetDir)
-	default:
-		return application.PerformFullAnalysis(targetDir)
-	}
+	// Default behavior: run full analysis when no subcommand provided
+	return application.PerformFullAnalysis(targetDir)
 }
 
 func loadConfigFromGlobal() (*config.Config, error) {

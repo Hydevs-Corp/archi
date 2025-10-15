@@ -10,7 +10,7 @@ import (
 func GenerateEstimationMarkdown(estimation *CountEstimation) string {
 	var md strings.Builder
 
-	md.WriteString("# File and Folder Count Estimation\n\n")
+	md.WriteString("# File and Folder Estimation\n\n")
 	md.WriteString(fmt.Sprintf("**Generated on:** %s\n\n", time.Now().Format("2006-01-02 15:04:05")))
 
 	md.WriteString("## Summary\n\n")

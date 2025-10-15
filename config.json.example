@@ -29,7 +29,7 @@
     "jsonOutputFile": "Name of the JSON output file containing the tree structure",
     "markdownOutputFile": "Name of the Markdown output file with tree visualization",
     "reportOutputFile": "Name of the architectural analysis report file",
-    "estimationFile": "Name of the estimation report file (count-only mode)",
+    "estimationFile": "Name of the estimation report file (estimate mode)",
     "mode": "Analysis mode: 'full', 'description-only' (no content in JSON), or 'folder-only' (folders only)",
     "fileAnalysisModel": "AI model to use for individual file content analysis",
     "folderAnalysisModel": "AI model to use for folder content analysis and descriptions",

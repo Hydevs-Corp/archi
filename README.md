@@ -25,7 +25,6 @@ Here are some of the features and improvements planned for future releases:
 -   **Cost Estimation Improvements**: Refine cost and time estimations based on file types and token counts.
 -   **Context Analysis**: Implement a way predefined context to the file, folder, and architecture analysis.
 -   **Metadata Injection**: Inject file metadata into the context analysis.
--   **Parallel AI Requests**: Implement parallel processing for AI requests to improve performance.
 -   **Advanced File Outlines**: Introduce specific file outlining for security vulnerabilities, and redundant code warnings.
 -   **Flat Analysis Mode**: Add a "flat analysis" mode to get a file architecture overview without deep content analysis, while retaining duplicate file warnings.
 -   **Expanded Media Support**: Add support for more media file types, including audio and video formats.
@@ -78,7 +77,7 @@ Download the latest release for your platform from the [Releases page](https://g
 archi-windows-amd64.exe --help
 
 # If added to PATH, you can use it globally
-archi-windows-amd64.exe count C:\your\project
+archi-windows-amd64.exe estimate C:\your\project
 
 # Analyze current directory
 archi-windows-amd64.exe
@@ -91,7 +90,7 @@ archi-windows-amd64.exe architecture
 
 ```cmd
 # Quick estimation
-archi-windows-amd64.exe count
+archi-windows-amd64.exe estimate
 
 # Analyze a specific directory
 archi-windows-amd64.exe "C:\Users\YourName\Documents\MyProject"
@@ -100,7 +99,9 @@ archi-windows-amd64.exe "C:\Users\YourName\Documents\MyProject"
 archi-windows-amd64.exe --config config.yaml "C:\path\to\project"
 
 # Folders only analysis (faster)
-archi-windows-amd64.exe --only-folders "C:\your\project"
+# Configure via config.yaml (mode: folder-only) or set env var:
+set ARCHI_MODE=folder-only
+archi-windows-amd64.exe "C:\your\project"
 ```
 
 **Windows Configuration Notes:**
@@ -176,7 +177,7 @@ cp config.json.example config.json
 -   `jsonOutputFile`: Name of the JSON output file containing the tree structure
 -   `markdownOutputFile`: Name of the Markdown output file with tree visualization
 -   `reportOutputFile`: Name of the architectural analysis report file
--   `estimationFile`: Name of the estimation report file (count-only mode)
+-   `estimationFile`: Name of the estimation report file (estimate mode)
 -   `fileAnalysisModel`: AI model to use for individual file content analysis
 -   `folderAnalysisModel`: AI model to use for folder content analysis
 -   `architectureAnalysisModel`: AI model to use for architectural analysis
@@ -207,7 +208,7 @@ Archi uses a modern CLI interface with subcommands:
 ./archi --help
 
 # Show help for specific commands
-./archi count --help
+./archi estimate --help
 ./archi architecture --help
 ```
 
@@ -226,14 +227,14 @@ Archi uses a modern CLI interface with subcommands:
 # Example: set mode: "folder-only" in config.yaml to only include folders
 ```
 
-#### Count Command (Quick Estimation)
+#### Estimate Command (Quick Estimation)
 
 ```bash
-# Get quick file/folder count and time estimation
-./archi count
+# Get quick file/folder counts and time estimation
+./archi estimate
 
-# Count specific directory
-./archi count /path/to/project
+# Estimate a specific directory
+./archi estimate /path/to/project
 ```
 
 #### Architecture Command (Generate Recommendations)
@@ -247,20 +248,16 @@ Archi uses a modern CLI interface with subcommands:
 ./archi archi
 ```
 
-### Global Flags
+### Global Flag
 
 -   `--config string`: Path to configuration file (YAML or JSON)
--   `--only-folders`: Only show folders in the output
--   `--no-content`: Exclude file content from the JSON output
--   `--count-only`: Only count files and folders (legacy flag, use `count` command instead)
--   `--better-archi`: Generate architectural recommendations (legacy flag, use `architecture` command instead)
 
 ### Usage Examples
 
 1. **Quick estimation** (no AI analysis, fast):
 
 ```bash
-./archi count
+./archi estimate
 ```
 
 2. **Full analysis with custom config**:
@@ -272,7 +269,11 @@ Archi uses a modern CLI interface with subcommands:
 3. **Folders only** (faster, focuses on structure):
 
 ```bash
-./archi --only-folders
+# Option A: use a config file with `mode: folder-only`
+./archi --config my-config.yaml
+
+# Option B: set environment variable for this run
+ARCHI_MODE="folder-only" ./archi
 ```
 
 4. **Generate architectural report** (run after basic analysis):
@@ -284,20 +285,19 @@ Archi uses a modern CLI interface with subcommands:
 5. **Analysis without file content** (smaller output files):
 
 ```bash
-./archi --no-content
+# Option A: use a config file with `mode: description-only`
+./archi --config my-config.yaml
+
+# Option B: set environment variable for this run
+ARCHI_MODE="description-only" ./archi
 ```
 
 6. **Using environment variables**:
 
 ```bash
 ARCHI_APIBASEURL="http://custom-api:3005" ./archi
-```
-
-7. **Legacy command style** (still supported):
-
-```bash
-./archi --count-only     # equivalent to: ./archi count
-./archi --better-archi   # equivalent to: ./archi architecture
+# You can also control analysis mode via env var
+ARCHI_MODE="folder-only" ./archi
 ```
 
 ## Output Files
@@ -306,8 +306,8 @@ ARCHI_APIBASEURL="http://custom-api:3005" ./archi
 
 1. **`output.json`**: Complete directory tree with AI descriptions in JSON format
 2. **`output.md`**: Human-readable tree visualization in Markdown
-3. **`estimation.md`**: Time estimation report (with `--count-only`)
-4. **`report.md`**: Architectural analysis and recommendations (with `--better-archi`)
+3. **`estimation.md`**: Time estimation report (with `estimate`)
+4. **`report.md`**: Architectural analysis and recommendations (with `architecture`)
 
 ### File Processing
 
@@ -325,7 +325,7 @@ The tool processes various file types:
 
 ```bash
 # Get quick overview
-./archi count
+./archi estimate
 
 # Full analysis if time permits
 ./archi
@@ -338,10 +338,10 @@ The tool processes various file types:
 
 ```bash
 # Start with estimation
-./archi count /large/project
+./archi estimate /large/project
 
 # Analyze structure only first
-./archi --only-folders /large/project
+ARCHI_MODE="folder-only" ./archi /large/project
 
 # Full analysis with content
 ./archi /large/project
@@ -364,7 +364,7 @@ The tool processes various file types:
 
 ```bash
 # Quick check in CI pipeline
-./archi count .
+./archi estimate .
 
 # Generate reports for documentation
 ./archi --config ci-config.yaml .
@@ -379,7 +379,7 @@ The tool processes various file types:
 -   **Folder processing**: ~7 seconds per folder for AI analysis
 -   **Request delay**: Configurable delay between API calls (default: 200ms)
 -   **Batch size**: Controls concurrency for file and folder analyses (default: 5)
--   **Large projects**: Use `./archi count` first to estimate time
+-   **Large projects**: Use `./archi estimate` first to estimate time
 -   **Memory usage**: Large files are truncated to 5000 characters for analysis
 
 ## Project Structure
@@ -388,23 +388,23 @@ Archi follows Go best practices:
 
 ```
 ├── cmd/                    # CLI commands (Cobra)
-│   ├── architecture.go    # Architecture analysis command
-│   ├── count.go          # Count estimation command
-│   └── root.go           # Root command & CLI setup
-├── internal/             # Private application packages
-│   ├── analyzer/        # Core analysis logic
+│   ├── architecture.go     # Architecture analysis command
+│   ├── estimate.go         # Estimate command
+│   └── root.go             # Root command & CLI setup
+├── internal/               # Private application packages
+│   ├── analyzer/           # Core analysis logic
 │   │   ├── ai_client.go    # AI API communication
 │   │   ├── analyzer.go     # Main analysis orchestration
 │   │   ├── filereaders.go  # File content extraction
 │   │   ├── output.go       # Output generation
 │   │   └── types.go        # Core type definitions
-│   ├── app/            # Application orchestration
-│   │   └── app.go         # High-level app logic
-│   └── config/         # Configuration management
-│       └── config.go      # Viper-based configuration
-├── main.go             # Simple entry point (7 lines)
-├── config.yaml.example # YAML configuration template
-└── go.mod             # Go module with dependencies
+│   ├── app/                # Application orchestration
+│   │   └── app.go          # High-level app logic
+│   └── config/             # Configuration management
+│       └── config.go       # Viper-based configuration
+├── main.go                 # Simple entry point (7 lines)
+├── config.yaml.example     # YAML configuration template
+└── go.mod                  # Go module with dependencies
 ```
 
 ## Troubleshooting
@@ -420,8 +420,8 @@ Archi follows Go best practices:
 2. **Large file processing**:
 
     - Files over 5000 characters are truncated for analysis
-    - Use `--no-content` to reduce output size
-    - Consider `--only-folders` for structure analysis
+    - Set `mode: description-only` to reduce output size
+    - Consider `mode: folder-only` for structure analysis
 
 3. **Permission errors**:
 
@@ -429,14 +429,14 @@ Archi follows Go best practices:
     - Check write permissions for output directory
 
 4. **Memory issues**:
-    - Use `./archi count` for very large projects
+    - Use `./archi estimate` for very large projects
     - Process subdirectories separately
 
 ### Performance Optimization
 
 -   Use custom configuration with appropriate request delays
--   Start with `./archi count` to understand scope
--   Use `--only-folders` for structural analysis
+-   Start with `./archi estimate` to understand scope
+-   Use `mode: folder-only` for structural analysis
 -   Configure output directory to SSD for faster writes
 
 ## API Requirements
@@ -472,7 +472,7 @@ The refactored application includes a comprehensive help system:
 ./archi --help
 
 # Command-specific help
-./archi count --help
+./archi estimate --help
 ./archi architecture --help
 
 # See all available commands
@@ -481,27 +481,10 @@ The refactored application includes a comprehensive help system:
 
 ### Available Commands
 
--   `count` - Count files and folders and estimate processing time
+-   `estimate` - Estimate files, folders, and processing time (alias: `count`)
 -   `architecture` (aliases: `arch`, `archi`) - Generate architectural recommendations
 -   `completion` - Generate shell completion scripts
 -   `help` - Help about any command
-
-## Backwards Compatibility
-
-The refactored version maintains full backwards compatibility:
-
--   All original flags still work (e.g., `--count-only`, `--better-archi`)
--   Configuration files remain compatible
--   Output formats are unchanged
--   API requirements are identical
-
-New features include:
-
--   Modern CLI with subcommands
--   YAML configuration support
--   Environment variable configuration
--   Shell completion support
--   Better help system
 
 ## Contributing
 
