@@ -186,6 +186,9 @@ cp config.json.example config.json
 -   `maxFileSize`: Maximum file size to process (in bytes)
 -   `requestDelay`: Delay between API requests to avoid overwhelming the service
 -   `batchSize`: Number of concurrent requests per batch (default: 5)
+-   `concurrency`: Object controlling concurrency behavior. Contains two fields:
+    -   `archiAnalysis`: Number of goroutines used to analyze chunks in parallel (default: 4, clamped to 32)
+    -   `reportChunking`: Number of goroutines used to combine groups during reduction (default: 4, clamped to 32)
 
 ### Environment Variables
 
@@ -195,6 +198,9 @@ You can override any configuration using environment variables with the `ARCHI_`
 export ARCHI_APIBASEURL="http://localhost:3005"
 export ARCHI_REQUESTDELAY="300ms"
 export ARCHI_MAXFILESIZE="2097152"
+# For nested config keys Viper maps dots to underscores. Use these env vars to set the nested concurrency fields:
+export ARCHI_CONCURRENCY_ARCHIANALYSIS="8"
+export ARCHI_CONCURRENCY_REPORTCHUNKING="4"
 ```
 
 ## Usage

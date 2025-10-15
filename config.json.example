@@ -23,6 +23,7 @@
   "maxFileSize": 1048576,
   "requestDelay": "200ms",
   "batchSize": 5,
+  "concurrency": 4,
   "_notes": {
     "apiBaseURL": "Base URL for the AI API service",
     "defaultOutputDir": "Directory where output files will be written",
@@ -41,6 +42,9 @@
     "imageAnalysisModels": "Array of provider/model objects used for image analysis",
     "maxFileSize": "Maximum file size in bytes to process (1MB = 1048576)",
     "requestDelay": "Delay between API requests (e.g., '200ms', '1s')",
-    "batchSize": "Number of concurrent requests per batch"
+    "concurrency": {
+      "archiAnalysis": "Number of goroutines used to analyze chunks in parallel (default: 4, clamped to 32)",
+      "reportChunking": "Number of goroutines used to combine groups during reduction (default: 4, clamped to 32)"
+    } 
   }
 }

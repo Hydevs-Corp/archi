@@ -203,14 +203,44 @@ func (a *App) PerformArchitectureAnalysis() error {
 
 		fmt.Printf("🔄 Processing %d chunks...\n", len(chunks))
 
-		for i, chunk := range chunks {
-			fmt.Printf("🔍 Analyzing chunk %d/%d...\n", i+1, len(chunks))
+		archiConcurrency := a.config.Concurrency.ArchiAnalysis
+		type chunkJob struct {
+			idx   int
+			chunk string
+		}
+		cj := make(chan chunkJob, len(chunks))
+		cres := make(chan struct {
+			idx int
+			txt string
+			err error
+		}, len(chunks))
 
-			analysis, err := aiClient.AnalyzeArchitecture(chunk, fmt.Sprintf("chunk_%d.combined", i+1))
-			if err != nil {
-				return fmt.Errorf("error analyzing chunk %d: %v", i+1, err)
+		for w := 0; w < archiConcurrency; w++ {
+			go func() {
+				for job := range cj {
+					fmt.Printf("🔍 Analyzing chunk %d/%d...\n", job.idx+1, len(chunks))
+					analysis, err := aiClient.AnalyzeArchitecture(job.chunk, fmt.Sprintf("chunk_%d.combined", job.idx+1))
+					cres <- struct {
+						idx int
+						txt string
+						err error
+					}{idx: job.idx, txt: analysis, err: err}
+				}
+			}()
+		}
+
+		for i, chunk := range chunks {
+			cj <- chunkJob{idx: i, chunk: chunk}
+		}
+		close(cj)
+
+		analyses = make([]string, len(chunks))
+		for i := 0; i < len(chunks); i++ {
+			r := <-cres
+			if r.err != nil {
+				return fmt.Errorf("error analyzing chunk %d: %v", r.idx+1, r.err)
 			}
-			analyses = append(analyses, analysis)
+			analyses[r.idx] = r.txt
 		}
 
 		reduced := analyses
@@ -245,14 +275,47 @@ func (a *App) PerformArchitectureAnalysis() error {
 
 			fmt.Printf("🔄 Combining %d groups in this round...\n", len(groups))
 
-			nextRound := make([]string, 0, len(groups))
+			concurrency := a.config.Concurrency.ReportChunking
+			type result struct {
+				idx int
+				txt string
+				err error
+			}
+
+			jobs := make(chan struct {
+				idx int
+				grp []string
+			}, len(groups))
+			results := make(chan result, len(groups))
+
+			// worker
+			for w := 0; w < concurrency; w++ {
+				go func() {
+					for job := range jobs {
+						fmt.Printf("   ➤ Combining group %d/%d (items: %d)...\n", job.idx+1, len(groups), len(job.grp))
+						combined, err := aiClient.CombineArchitecturalAnalyses(job.grp)
+						results <- result{idx: job.idx, txt: combined, err: err}
+					}
+				}()
+			}
+
+			// enqueue jobs
 			for gi, grp := range groups {
-				fmt.Printf("   ➤ Combining group %d/%d (items: %d)...\n", gi+1, len(groups), len(grp))
-				combined, err := aiClient.CombineArchitecturalAnalyses(grp)
-				if err != nil {
-					return fmt.Errorf("error combining group %d analyses: %v", gi+1, err)
+				jobs <- struct {
+					idx int
+					grp []string
+				}{idx: gi, grp: grp}
+			}
+			close(jobs)
+
+			// collect
+			nextRound := make([]string, len(groups))
+			for i := 0; i < len(groups); i++ {
+				res := <-results
+				if res.err != nil {
+					return fmt.Errorf("error combining group %d analyses: %v", res.idx+1, res.err)
 				}
-				nextRound = append(nextRound, combined)
+				nextRound[res.idx] = res.txt
 			}
 
 			reduced = nextRound

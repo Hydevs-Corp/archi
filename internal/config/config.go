@@ -32,6 +32,12 @@ type Config struct {
 	RequestDelayStr           string        `mapstructure:"requestDelay"`
 	RequestDelay              time.Duration `mapstructure:"-"`
 	BatchSize                 int           `mapstructure:"batchSize"`
+	Concurrency               ConcurrencyConfig `mapstructure:"concurrency"`
+}
+
+type ConcurrencyConfig struct {
+	ArchiAnalysis  int `mapstructure:"archiAnalysis" json:"archiAnalysis"`
+	ReportChunking int `mapstructure:"reportChunking" json:"reportChunking"`
 }
 
 // ProviderModel represents an entry of the new array-based model selection API
@@ -61,6 +67,7 @@ func GetDefaultConfig() *Config {
 		RequestDelayStr:           "200ms",
 		RequestDelay:              200 * time.Millisecond,
 		BatchSize:                 5,
+		Concurrency:               ConcurrencyConfig{ArchiAnalysis: 4, ReportChunking: 4},
 	}
 }
 
@@ -88,6 +95,8 @@ func LoadConfig(configPath string) (*Config, error) {
 	v.SetDefault("maxFileSize", config.MaxFileSize)
 	v.SetDefault("requestDelay", config.RequestDelayStr)
 	v.SetDefault("batchSize", config.BatchSize)
+	v.SetDefault("concurrency.archiAnalysis", config.Concurrency.ArchiAnalysis)
+	v.SetDefault("concurrency.reportChunking", config.Concurrency.ReportChunking)
 
 	if configPath != "" {
 		v.SetConfigFile(configPath)
@@ -116,6 +125,17 @@ func LoadConfig(configPath string) (*Config, error) {
 
 	if err := v.Unmarshal(config); err != nil {
 		return nil, fmt.Errorf("error unmarshaling config: %w", err)
+	}
+
+	// Clamp concurrency to a safe maximum to avoid overwhelming the API or local resources
+	const maxConcurrency = 32
+	if config.Concurrency.ArchiAnalysis > maxConcurrency {
+		fmt.Printf("⚠️  concurrency.archiAnalysis value %d is higher than allowed max %d, clamping to %d\n", config.Concurrency.ArchiAnalysis, maxConcurrency, maxConcurrency)
+		config.Concurrency.ArchiAnalysis = maxConcurrency
+	}
+	if config.Concurrency.ReportChunking > maxConcurrency {
+		fmt.Printf("⚠️  concurrency.reportChunking value %d is higher than allowed max %d, clamping to %d\n", config.Concurrency.ReportChunking, maxConcurrency, maxConcurrency)
+		config.Concurrency.ReportChunking = maxConcurrency
 	}
 
 	if config.RequestDelayStr != "" {
@@ -177,6 +197,12 @@ func validateConfig(config *Config) error {
 	}
 	if config.BatchSize <= 0 {
 		return fmt.Errorf("batchSize must be >= 1")
+	}
+	if config.Concurrency.ArchiAnalysis <= 0 {
+		return fmt.Errorf("concurrency.archiAnalysis must be >= 1")
+	}
+	if config.Concurrency.ReportChunking <= 0 {
+		return fmt.Errorf("concurrency.reportChunking must be >= 1")
 	}
 	switch strings.ToLower(strings.TrimSpace(config.Mode)) {
 	case "", "full", "description-only", "folder-only":

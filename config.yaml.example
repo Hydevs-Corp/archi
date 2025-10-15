@@ -36,4 +36,7 @@ imageAnalysisModel: "magistral-small-2509"
 # Processing Configuration
 maxFileSize: 1048576  # 1MB in bytes
 requestDelay: "200ms" # Delay between API requests
-batchSize: 5          # Number of concurrent requests per batch
+# Object controlling concurrency behavior. Contains two fields:
+concurrency:
+    archiAnalysis # Number of goroutines used to analyze chunks in parallel (default: 4, clamped to 32)
+    reportChunking # Number of goroutines used to combine groups during reduction (default: 4, clamped to 32)
