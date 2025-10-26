@@ -2,6 +2,12 @@
 
 Archi is a powerful Go-based command-line tool that analyzes directory structures and generates AI-powered insights about your project's architecture. It creates detailed reports, visualizations, and architectural recommendations by leveraging AI to understand file contents and folder organization.
 
+## Built with AI Queuer
+
+This project uses the AI Queuer project for request orchestration and batching when communicating with AI services. AI Queuer (https://github.com/Hydevs-Corp/ai-queuer) handles queued/batched requests to the AI API, retry behavior, and provider-specific plumbing so Archi can focus on analysis and report generation.
+
+At the moment, Archi itself is not planned to integrate other AI providers directly; however, AI Queuer plans to add multi-provider support in the future, which will allow Archi to target multiple AI backends via the queuer without changing Archi's core request logic.
+
 ## Features
 
 -   🔍 **Smart Directory Analysis**: Recursively scans directories and analyzes file contents
@@ -20,7 +26,6 @@ Archi is a powerful Go-based command-line tool that analyzes directory structure
 Here are some of the features and improvements planned for future releases:
 
 -   **Architecture Generation**: Offer the possibility to create a recommended folder architecture on the filesystem.
--   **Multi-AI Provider Support**: Add a way to use other AI providers beyond the current default (e.g., OpenAI, Anthropic).
 -   **Enhanced Visualization**: Generate interactive diagrams (e.g., using D3.js or Mermaid.js) of the folder structure and dependencies.
 -   **Cost Estimation Improvements**: Refine cost and time estimations based on file types and token counts.
 -   **Context Analysis**: Implement a way predefined context to the file, folder, and architecture analysis.
